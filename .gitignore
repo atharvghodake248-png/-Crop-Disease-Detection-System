@@ -10,4 +10,3 @@ __pycache__/
 .ipynb_checkpoints/
 
 .env
-crop_model.keras
