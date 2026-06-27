@@ -1,11 +1,13 @@
 import streamlit as st
 import tensorflow as tf
 import numpy as np
+import os
+import requests
 from tensorflow.keras.utils import load_img, img_to_array
 import json
-
+ 
 st.set_page_config(page_title="Crop Disease Detection AI", page_icon="🌱", layout="centered")
-
+ 
 # ---------------- DISEASE KNOWLEDGE BASE ----------------
 DISEASE_DB = {
     "capsicum_Healthy": {
@@ -62,7 +64,7 @@ DISEASE_DB = {
         "prevention": ["Use resistant varieties", "Prune for spacing/airflow", "Avoid excess nitrogen", "Monitor in warm-day/cool-night weather"]
     },
 }
-
+ 
 DEFAULT_INFO = {
     "category": "Unknown", "emoji": "❓", "display_name": "Unrecognized class", "type": "Unknown",
     "description": "No information available for this class yet.",
@@ -72,47 +74,58 @@ DEFAULT_INFO = {
     "chemical_treatment": ["Consult a local agricultural expert"],
     "prevention": ["Consult a local agricultural expert"]
 }
-
+ 
+# ---------------- MODEL DOWNLOAD + LOAD ----------------
+# 👇 हे YOUR GitHub Release ची लिंक टाका (Releases page वरून "Copy link address" केलेली)
+MODEL_URL = "https://github.com/atharvghodake248-png/-Crop-Disease-Detection-System/releases/download/v1.0/crop_model.keras"
+MODEL_PATH = "crop_model.keras"
+ 
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model("crop_model.keras", compile=False)
-
+    if not os.path.exists(MODEL_PATH):
+        with st.spinner("Downloading model... (only happens once)"):
+            response = requests.get(MODEL_URL)
+            response.raise_for_status()
+            with open(MODEL_PATH, "wb") as f:
+                f.write(response.content)
+    return tf.keras.models.load_model(MODEL_PATH, compile=False)
+ 
 model = load_model()
-
+ 
 with open("class_names.json", "r") as f:
     class_indices = json.load(f)
 class_names = {v: k for k, v in class_indices.items()}
-
+ 
 IMG_SIZE = (224, 224)
-
+ 
 st.title("🌱 Crop Disease Detection AI")
 st.write("Upload a leaf image to detect disease, see treatment options, and check prediction confidence.")
-
+ 
 uploaded_file = st.file_uploader("Choose a leaf image", type=["jpg", "png", "jpeg"])
-
+ 
 def predict(image_path):
     img = load_img(image_path, target_size=IMG_SIZE)
     img_array = img_to_array(img) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
     return model.predict(img_array)[0]  # full probability vector
-
+ 
 if uploaded_file is not None:
     file_path = "temp.jpg"
     with open(file_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
-
+ 
     st.image(uploaded_file, caption="Uploaded Image")
-
+ 
     probs = predict(file_path)
     top_idx = int(np.argmax(probs))
     top_class = class_names[top_idx]
     top_conf = float(probs[top_idx])
     info = DISEASE_DB.get(top_class, DEFAULT_INFO)
-
+ 
     # 1. SMART HEALTH CLASSIFICATION
     st.markdown(f"## {info['emoji']} {info['category']}")
     st.success(f"**Prediction:** {info['display_name']}  \n**Confidence:** {top_conf*100:.1f}%")
-
+ 
     # 4. CONFIDENCE SCORE DISPLAY
     st.subheader("📊 Confidence Breakdown — Top 3")
     top3 = np.argsort(probs)[::-1][:3]
@@ -122,7 +135,7 @@ if uploaded_file is not None:
         pct = float(probs[idx]) * 100
         st.write(f"{cinfo['emoji']} **{cinfo['display_name']}** — {pct:.1f}%")
         st.progress(min(int(pct), 100))
-
+ 
     # 2. DISEASE INFORMATION PANEL
     st.subheader("📋 Disease Information")
     st.write(f"**Disease Name:** {info['display_name']}")
@@ -130,7 +143,7 @@ if uploaded_file is not None:
     st.write(f"**Description:** {info['description']}")
     st.write(f"**Causes:** {info['causes']}")
     st.write(f"**Spread Conditions:** {info['spread']}")
-
+ 
     # 3. PRECAUTION & TREATMENT SYSTEM
     if info["category"] != "Healthy":
         st.subheader("🛡️ Precautions & Treatment")
@@ -150,3 +163,4 @@ if uploaded_file is not None:
     else:
         st.balloons()
         st.info("✅ This plant looks healthy! Keep up the good care.")
+ 
