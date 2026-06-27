@@ -1,0 +1,12 @@
+dataset/
+dataset_flat/
+
+*.jpg
+*.JPG
+*.jpeg
+*.png
+
+__pycache__/
+.ipynb_checkpoints/
+
+.env
