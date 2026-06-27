@@ -24,5 +24,5 @@ pinned: false
 
 
 
-Upload a crop leaf image to detect the disease.
+Upload a crop leaf image to detect crop disease.
 
