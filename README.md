@@ -1,28 +1,15 @@
-\---
-
+---
 title: Crop Disease Detector
-
 emoji: 🌿
-
 colorFrom: green
-
 colorTo: blue
-
 sdk: streamlit
-
-sdk\_version: 1.38.0
-
-app\_file: app.py
-
+sdk_version: "1.38.0"
+python_version: "3.11"
+app_file: app.py
 pinned: false
+---
 
-\---
+# Crop Disease Detection System
 
-
-
-\# Crop Disease Detection System
-
-
-
-Upload a crop leaf image to detect crop disease.
-
+Upload a crop leaf image to detect crop diseases using TensorFlow.
